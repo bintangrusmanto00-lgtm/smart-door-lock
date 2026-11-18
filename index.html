@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistem Kunci Berbasis Arduino dan Sensor Sidik Jari FPM10A · Kelompok 3</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top"><span>Sistem Kunci Berbasis Arduino dan Sensor Sidik Jari FPM10A<small>KELOMPOK 3</small></span></a>
+    <nav aria-label="Navigasi utama">
+      <a href="#dashboard">Dashboard</a>
+      <a href="#simulasi">Simulasi</a>
+      <a href="#kelola">Fingerprint</a>
+      <a href="#log">Log Aktivitas</a>
+      <a href="#tentang">Tentang Sistem</a>
+    </nav>
+    <button class="btn sm" id="btnConnect" type="button">Hubungkan Arduino</button>
+    <span class="chip" id="navStatus" data-tone="idle">Standby</span>
+  </div>
+</header>
+
+<main id="top">
+  <section class="wrap hero">
+    <div>
+      <h1>Sistem Kunci Berbasis Arduino dan Sensor Sidik Jari FPM10A<span class="kelompok">KELOMPOK 3</span></h1>
+      <p class="lead">Simulasi sistem pintu otomatis berbasis Arduino dan sensor sidik jari. Coba pemindaian jari terdaftar dan tidak terdaftar, lalu lihat pintu, pengunci, dan log aktivitas berubah.</p>
+      <button class="btn primary" id="btnStart" type="button">Mulai Simulasi</button>
+    </div>
+    <svg class="hero-art" viewBox="0 0 380 250" role="img" aria-label="Ilustrasi pintu, sensor sidik jari, dan Arduino">
+      <rect x="20" y="20" width="120" height="200" rx="6" fill="#fff" stroke="#14212e" stroke-width="3"/>
+      <rect x="34" y="34" width="92" height="172" rx="3" fill="#d9e3ec"/>
+      <circle cx="112" cy="130" r="5" fill="#14212e"/>
+      <rect x="154" y="98" width="48" height="64" rx="9" fill="#fff" stroke="#14212e" stroke-width="3"/>
+      <circle cx="178" cy="130" r="15" fill="none" stroke="#1d4e7a" stroke-width="3"/>
+      <circle cx="178" cy="130" r="7" fill="none" stroke="#1d4e7a" stroke-width="3"/>
+      <path d="M202 130 H270 V160" fill="none" stroke="#14212e" stroke-width="3"/>
+      <rect x="226" y="160" width="140" height="70" rx="6" fill="#1d4e7a"/>
+      <text x="296" y="203" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">UNO</text>
+      <circle cx="248" cy="148" r="6" fill="#1f9d55"/>
+      <circle cx="344" cy="148" r="6" fill="#d64545"/>
+    </svg>
+  </section>
+
+  <section class="wrap" id="dashboard">
+    <h2>Dashboard Monitoring</h2>
+    <div class="cards">
+      <article class="card"><h3>Status Arduino</h3><span class="chip" id="stArduino" data-tone="idle">Simulated</span></article>
+      <article class="card"><h3>Status Sensor</h3><span class="chip" id="stSensor" data-tone="idle">Ready</span></article>
+      <article class="card"><h3>Status Autentikasi</h3><span class="chip" id="stAuth" data-tone="idle">Menunggu</span></article>
+      <article class="card"><h3>Status Pintu</h3><span class="chip" id="stDoor" data-tone="idle">Locked</span></article>
+      <article class="card"><h3>Status Pengunci</h3><span class="chip" id="stLock" data-tone="idle">Locked</span></article>
+      <article class="card"><h3>Statistik Akses</h3>
+        <p class="stats"><b id="statOk">0</b> berhasil &nbsp; <b id="statFail">0</b> gagal</p>
+      </article>
+      <article class="card led-card"><h3>Indikator LED Arduino</h3>
+        <div class="led-indicators" aria-live="polite">
+          <div class="led-indicator"><span class="led-bulb green" id="dashLedGreen" role="img" aria-label="LED hijau mati"></span><span><b>Hijau</b><small>Akses / operasi berhasil</small></span></div>
+          <div class="led-indicator"><span class="led-bulb red" id="dashLedRed" role="img" aria-label="LED merah mati"></span><span><b>Merah</b><small>Akses / operasi gagal</small></span></div>
+        </div>
+        <p class="led-caption" id="ledCaption">Kedua LED mati · sistem siaga</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="wrap" id="simulasi">
+    <h2>Simulasi</h2>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Panel Simulasi Fingerprint</h3>
+        <div class="sensor" id="sensor" data-tone="idle">
+          <svg viewBox="0 0 160 160" aria-hidden="true">
+            <rect x="8" y="8" width="144" height="144" rx="22" fill="#f4f7f9" stroke="currentColor" stroke-width="4"/>
+            <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round">
+              <ellipse cx="80" cy="84" rx="12" ry="18"/>
+              <ellipse cx="80" cy="84" rx="26" ry="34" stroke-dasharray="70 12"/>
+              <ellipse cx="80" cy="84" rx="40" ry="50" stroke-dasharray="90 16"/>
+              <ellipse cx="80" cy="84" rx="54" ry="64" stroke-dasharray="60 20" opacity=".6"/>
+            </g>
+            <rect class="scanline" x="16" y="16" width="128" height="6" rx="3"/>
+          </svg>
+        </div>
+
+        <fieldset>
+          <legend>Skenario sidik jari</legend>
+          <label><input type="radio" name="fp" value="valid" checked> Terdaftar</label>
+          <select id="selUser" aria-label="Pengguna terdaftar">
+            <option value="1">ID 1 · Bintang</option>
+            <option value="2">ID 2 · Galang</option>
+            <option value="3">ID 3 · Lutfi</option>
+            <option value="4">ID 4 · Raply</option>
+            <option value="5">ID 5 · Revania</option>
+          </select>
+          <label><input type="radio" name="fp" value="invalid"> Tidak terdaftar</label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Pengaturan simulasi</legend>
+          <label><input type="checkbox" id="optAuto" checked> Auto Lock</label>
+          <label>Durasi pintu terbuka
+            <select id="optDuration"><option value="3">3 detik</option><option value="5" selected>5 detik</option><option value="8">8 detik</option></select>
+          </label>
+          <label><input type="checkbox" id="optHold"> Pintu ditahan terbuka (halangan di ambang pintu)</label>
+          <label><input type="checkbox" id="optError"> Simulasikan error sistem</label>
+        </fieldset>
+
+        <div class="actions">
+          <button class="btn primary" id="btnScan" type="button">Scan Fingerprint</button>
+          <button class="btn" id="btnLock" type="button" disabled>Kunci Pintu</button>
+          <button class="btn" id="btnReset" type="button">Reset Sistem</button>
+        </div>
+
+        <div class="result" id="result" data-tone="idle" aria-live="polite">
+          <b id="resTitle">Siap memindai</b>
+          <span id="resDetail">Pilih skenario, lalu tekan Scan Fingerprint.</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Visualisasi Pintu Otomatis</h3>
+        <div class="lcd" aria-label="Simulasi layar LCD 16x2">
+          <div class="lcd-screen"><div class="lcd-line" id="lcd1"></div><div class="lcd-line" id="lcd2"></div></div>
+          <p class="lcd-cap">LCD 16x2 · I2C</p>
+        </div>
+        <div class="scene">
+          <div class="frame">
+            <div class="room"></div>
+            <div class="leaf" id="door" data-state="locked"><span class="knob"></span></div>
+            <div class="bolt" id="bolt" data-locked="true"></div>
+          </div>
+        </div>
+        <p class="row">Status pintu: <span class="chip" id="doorState" data-tone="idle">Locked</span></p>
+        <p class="row" id="solState">Solenoid: tidak aktif (baut terkunci)</p>
+        <p class="hint">Pintu hanya membuka setelah autentikasi berhasil. Auto Lock menunggu sampai pintu tidak ditahan terbuka.</p>
+
+        <div class="dfp">
+          <h3>Modul Suara DFPlayer Mini</h3>
+          <p class="row">Status: <span class="chip" id="dfState" data-tone="idle">Idle</span>
+            <span class="eq" id="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span></p>
+          <p class="caption" id="dfCaption" data-tone="idle" aria-live="polite">Menunggu perintah putar suara.</p>
+          <label class="vol">Volume <input type="range" id="dfVol" min="0" max="30" value="20"> <b><span id="dfVolVal">20</span>/30</b></label>
+          <label><input type="checkbox" id="dfMute"> Bisukan speaker</label>
+          <div class="actions">
+            <button class="btn" id="btnTrack1" type="button">Tes 0001 · Silakan masuk</button>
+            <button class="btn" id="btnTrack2" type="button">Tes 0002 · Coba lagi</button>
+          </div>
+          <p class="hint">Simulasi: kartu SD berisi 0001.mp3 (akses diterima) dan 0002.mp3 (akses ditolak). Suara dibuat oleh text-to-speech browser, bukan file MP3 asli.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="wrap" id="kelola">
+    <h2>Manajemen Fingerprint</h2>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Enrollment · Verification · Delete</h3>
+        <p class="hint">Panel ini mensimulasikan operasi sensor FPM10A. Data tersimpan hanya di browser selama halaman dibuka; untuk sensor fisik gunakan sketch Arduino di folder project.</p>
+        <label class="field-label" for="fpName">Nama pengguna</label>
+        <input class="text-input" id="fpName" maxlength="32" placeholder="Contoh: Bintang">
+        <label class="field-label" for="fpId">ID fingerprint (1–127)</label>
+        <input class="text-input" id="fpId" type="number" min="1" max="127" value="6">
+        <div class="actions">
+          <button class="btn primary" id="btnEnroll" type="button">Enrollment</button>
+          <button class="btn" id="btnVerify" type="button">Verification</button>
+          <button class="btn" id="btnDelete" type="button">Delete ID</button>
+        </div>
+        <div class="result" id="fpResult" data-tone="idle" aria-live="polite">
+          <b id="fpResTitle">Sensor FPM10A siap</b>
+          <span id="fpResDetail">Pilih operasi yang ingin dijalankan.</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Template sidik jari terdaftar</h3>
+        <div class="tw">
+          <table>
+            <thead><tr><th>ID</th><th>Nama</th><th>Status</th></tr></thead>
+            <tbody id="fpUsersBody"></tbody>
+          </table>
+        </div>
+        <p class="hint" id="fpCount">0 template tersimpan di simulasi.</p>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:1rem">
+      <h3>Alur kerja perangkat Arduino Uno + FPM10A</h3>
+      <p>Arduino menangani pendaftaran dua kali scan, pencocokan template, dan penghapusan ID. LED hijau + bunyi pendek menandakan berhasil; LED merah + bunyi panjang menandakan gagal.</p>
+      <p class="note"><b>Catatan:</b> sebelum tombol <b>Hubungkan Arduino</b> ditekan, operasi di sini hanya simulasi UI. Setelah terhubung (Chrome/Edge), tombol Enrollment, Verification, dan Delete mengirim perintah ke sensor FPM10A lewat USB. Program perangkat keras: <code>Sensor_Door_lock_lengkap_.ino</code>.</p>
+    </div>
+  </section>
+
+  <section class="wrap" id="log">
+    <div class="head">
+      <h2>Log Aktivitas</h2>
+      <div class="actions">
+        <button class="btn" id="btnClear" type="button">Hapus Log</button>
+      </div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>No</th><th>Waktu pemindaian</th><th>ID</th><th>Nama pengguna</th><th>Hasil</th><th>Pintu / pengunci</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="wrap" id="tentang">
+    <h2>Tentang Sistem</h2>
+    <div class="panel">
+      <svg class="device" viewBox="0 0 580 170" role="img" aria-label="Sensor terhubung ke Arduino, lalu ke pengunci elektronik">
+        <g fill="#fff" stroke="#14212e" stroke-width="3">
+          <rect x="10" y="30" width="150" height="90" rx="8"/>
+          <rect x="420" y="30" width="150" height="90" rx="8"/>
+        </g>
+        <rect x="215" y="20" width="150" height="110" rx="8" fill="#1d4e7a"/>
+        <g font-size="15" text-anchor="middle" font-weight="600">
+          <text x="85" y="70" fill="#14212e">Sensor</text><text x="85" y="92" fill="#14212e">fingerprint</text>
+          <text x="290" y="62" fill="#fff">Arduino Uno</text>
+          <text x="495" y="70" fill="#14212e">Pengunci</text><text x="495" y="92" fill="#14212e">elektronik</text>
+        </g>
+        <circle id="ledG" class="led g" cx="255" cy="100" r="9"/>
+        <circle id="ledR" class="led r" cx="325" cy="100" r="9"/>
+        <g stroke="#14212e" stroke-width="3" fill="none"><path d="M160 75 H215"/><path d="M365 75 H420"/></g>
+        <g font-size="12" fill="#566878" text-anchor="middle"><text x="188" y="64">UART</text><text x="392" y="64">driver</text><text x="290" y="152">LED hijau: diterima · LED merah: ditolak</text></g>
+      </svg>
+      <p>Sensor membaca sidik jari dan mengirim hasil ke Arduino lewat serial (UART). Arduino memutuskan akses, menyalakan LED, dan menggerakkan solenoid door lock melalui rangkaian driver. Modul DFPlayer Mini memutar pesan suara dari kartu SD: "Silakan masuk" saat akses diterima dan "Coba lagi" saat ditolak. LCD 16x2 menampilkan status singkat: siaga, memindai, akses diterima atau ditolak, serta hitung mundur penguncian pintu.</p>
+      <p class="note"><b>Mode simulasi dan mode perangkat keras.</b> Tanpa koneksi, seluruh pemindaian dan status adalah simulasi di browser. Setelah Arduino dihubungkan, hasil pemindaian berasal dari sensor FPM10A; website hanya menerima ID dan hasil cocok/tidak cocok, bukan data biometrik.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Sistem Kunci Berbasis Arduino dan Sensor Sidik Jari FPM10A</b> · Kelompok 3. Proyek UTS Praktikum Algoritma dan Bahasa Pemrograman Komputer, dikembangkan sebagai media demonstrasi autentikasi sidik jari.</p>
+    <p>Teknologi: HTML, CSS, JavaScript. Simulasi Arduino Uno, sensor fingerprint FPM10A, enrollment, verification, delete, solenoid door lock, modul suara DFPlayer Mini, dan LCD 16x2.</p>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script src="serial.js"></script>
+</body>
+</html>
